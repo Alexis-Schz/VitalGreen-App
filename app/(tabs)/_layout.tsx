@@ -1,57 +1,69 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Ionicons } from "@expo/vector-icons"; // Librería de iconos de Expo
+import { Tabs } from "expo-router";
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: "#2D5A27", // Tu verde principal
+        tabBarInactiveTintColor: "#888888", // Gris para los inactivos
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#EEEEEE",
+          height: 65, // Un poco más alta para que sea cómoda
+          paddingBottom: 10,
+          paddingTop: 5,
+        },
+        headerTitleStyle: {
+          color: "#2D5A27",
+          fontWeight: "bold",
+          fontSize: 20,
+        },
+        headerShadowVisible: false, // Quita la línea fea debajo del título superior
+      }}
+    >
+      {/* Pestaña 1: Dashboard (La que ya tienes) */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: "Mi Jardín",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="leaf" size={26} color={color} />
           ),
         }}
       />
+
+      {/* Pestaña 2: Catálogo (La que acabamos de programar) */}
       <Tabs.Screen
-        name="two"
+        name="catalog"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: "Añadir",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="add" size={26} color={color} />
+          ),
+        }}
+      />
+
+      {/* Pestaña 3: Escanear Plagas (Del CU-03 de tu documento) */}
+      <Tabs.Screen
+        name="scan"
+        options={{
+          title: "Escanear",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="camera" size={26} color={color} />
+          ),
+        }}
+      />
+
+      {/* Pestaña 4: Perfil del Usuario */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={26} color={color} />
+          ),
         }}
       />
     </Tabs>

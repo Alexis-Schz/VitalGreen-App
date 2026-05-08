@@ -1,94 +1,144 @@
-// app/(tabs)/index.tsx
-import { PlantCard } from "@//components/PlantCard";
-import { Colors } from "@//constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react"; // Importamos useState
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Link, useFocusEffect } from "expo-router"; // <-- Importamos Link aquí
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { AuthService } from "../../src/api/AuthService";
+import { PlantService } from "../../src/api/PlantService";
 
 export default function DashboardScreen() {
-  // 1. Estado para el Modo Viaje (RN-08)
-  const [isTravelMode, setIsTravelMode] = useState(false);
+  const [myPlants, setMyPlants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 2. Color dinámico: Verde si está en casa, Ámbar si está de viaje
-  const themeColor = isTravelMode ? Colors.accent : Colors.primary;
+  useFocusEffect(
+    useCallback(() => {
+      loadMyGarden();
+    }, []),
+  );
+
+  const loadMyGarden = async () => {
+    setLoading(true);
+    try {
+      const user = await AuthService.getCurrentUser();
+      if (user) {
+        const plantas = await PlantService.getUserPlants(user.id);
+        setMyPlants(plantas);
+      }
+    } catch (error) {
+      console.error("Error al cargar jardín:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        color="#2D5A27"
+        style={{ flex: 1, justifyContent: "center" }}
+      />
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header Dinámico */}
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.greeting, { color: themeColor }]}>
-            {isTravelMode ? "Modo Viaje Activo ✈️" : "Hola, Alexis 👋"}
-          </Text>
-          <Text style={styles.subGreeting}>
-            {isTravelMode
-              ? "Tus plantas están protegidas."
-              : "Tus plantas te extrañaban."}
+    <View style={styles.container}>
+      <Text style={styles.headerTitle}>Mi Jardín</Text>
+
+      {myPlants.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="leaf-outline" size={60} color="#CCC" />
+          <Text style={styles.emptyText}>Aún no tienes plantas.</Text>
+          <Text style={styles.emptySub}>
+            Ve al catálogo para agregar tu primera especie.
           </Text>
         </View>
-
-        {/* Switch para activar/desactivar (Simulando Ajustes) */}
-        <View style={styles.switchContainer}>
-          <Text style={styles.switchLabel}>Viaje</Text>
-          <Switch
-            value={isTravelMode}
-            onValueChange={setIsTravelMode}
-            trackColor={{ false: "#767577", true: Colors.accent }}
-          />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        {/* Sección de Consejos Dinámicos (RN-08) */}
-        {isTravelMode && (
-          <View style={styles.travelNotice}>
-            <Ionicons name="sunny" size={20} color="#856404" />
-            <Text style={styles.travelText}>
-              Consejo: Aleja tu Monstera de la ventana mientras no estás.
-            </Text>
-          </View>
-        )}
-
-        <Text style={styles.sectionTitle}>Mi Jardín Urbano</Text>
-
-        {/* Pasamos el color dinámico a las tarjetas si queremos (opcional) */}
-        <PlantCard apodo="Monstera" especie="Monstera Deliciosa" salud={85} />
-        <PlantCard apodo="Poto" especie="Epipremnum aureum" salud={92} />
-      </View>
-    </ScrollView>
+      ) : (
+        <FlatList
+          data={myPlants}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            /* AQUÍ ESTÁ LA MAGIA DE LA NAVEGACIÓN */
+            <Link href={`/plant/${item.id}`} asChild>
+              <TouchableOpacity style={styles.plantCard}>
+                <View>
+                  <Text style={styles.plantApodo}>{item.apodo}</Text>
+                  <Text style={styles.plantEspecie}>
+                    {Array.isArray(item.especies)
+                      ? item.especies[0]?.nombre_comun
+                      : item.especies?.nombre_comun}
+                  </Text>
+                </View>
+                <View style={styles.healthBadge}>
+                  <Ionicons name="heart" size={16} color="#FFF" />
+                  <Text style={styles.healthText}>
+                    {item.salud_actual || 100}%
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Link>
+          )}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    padding: 30,
-    paddingTop: 60,
+  container: { flex: 1, backgroundColor: "#F9FBF9", padding: 20 },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2D5A27",
+    marginBottom: 20,
+    marginTop: 40,
+  },
+
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  emptyText: { fontSize: 18, fontWeight: "bold", color: "#666", marginTop: 10 },
+  emptySub: { fontSize: 14, color: "#999", textAlign: "center", marginTop: 5 },
+
+  plantCard: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 15,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
   },
-  greeting: { fontSize: 22, fontWeight: "bold" },
-  subGreeting: { fontSize: 14, color: "#666" },
-  switchContainer: { alignItems: "center" },
-  switchLabel: { fontSize: 10, fontWeight: "bold", color: "#888" },
-  content: { padding: 20 },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 15,
-    color: "#1A1A1A",
+  plantApodo: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  plantEspecie: {
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic",
+    marginTop: 4,
   },
-  // Estilos para el aviso de viaje
-  travelNotice: {
-    backgroundColor: "#FFF3CD", // Amarillo suave de alerta
-    padding: 15,
-    borderRadius: 12,
+
+  healthBadge: {
+    backgroundColor: "#4CAF50",
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#FFEEBA",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 5,
   },
-  travelText: { color: "#856404", fontSize: 13, marginLeft: 10, flex: 1 },
+  healthText: { color: "#FFF", fontWeight: "bold", fontSize: 14 },
 });
