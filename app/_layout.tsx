@@ -32,13 +32,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (initializing) return;
 
-    const inAuthGroup = segments[0] === "login";
+    // ¡CAMBIO IMPORTANTE AQUÍ!
+    // Ahora el sistema sabe que "login" y "register" son pantallas para invitados
+    const inAuthGroup = segments[0] === "login" || segments[0] === "register";
 
-    // Si no hay usuario y no está en login, mandarlo a login
+    // Si no hay usuario y no está en login/register, mandarlo a login
     if (!user && !inAuthGroup) {
       router.replace("/login");
     }
-    // Si hay usuario y está atrapado en login, mandarlo al home
+    // Si hay usuario y está atrapado en login/register, mandarlo al home
     else if (user && inAuthGroup) {
       router.replace("/(tabs)");
     }
@@ -61,7 +63,20 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="login" options={{ headerShown: false }} />
+
+      {/* ¡NUEVA PANTALLA! Registro de usuarios */}
+      <Stack.Screen
+        name="register"
+        options={{ title: "Crear Cuenta", headerShown: true }}
+      />
+
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+      {/* ¡NUEVA PANTALLA! Detalles y cuidados de la planta */}
+      <Stack.Screen
+        name="plant/[id]"
+        options={{ title: "Detalle de la Planta" }}
+      />
     </Stack>
   );
 }
